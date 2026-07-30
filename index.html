@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>TrackBus</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Montserrat:wght@900&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+<body class="dark">
+    <div id="app-container">
+        <div class="viewport">
+            
+            <aside id="sidebar" class="sidebar">
+                <button id="close-menu" class="btn-close-sidebar" style="background: none; border: none; color: #888; position: absolute; top: 16px; right: 16px; font-size: 1.2rem; cursor: pointer;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+
+                <div class="sidebar-header">
+                    <div class="sidebar-user-avatar">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <div class="sidebar-user-details">
+                        <h3 id="sidebar-user-name">Carregando...</h3>
+                        <span class="user-badge" id="sidebar-user-tag">
+                            <i class="fa-solid fa-id-card"></i> <span id="sidebar-matricula-text">--</span>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="sidebar-divider"></div>
+
+                <nav class="sidebar-nav">
+                    <a href="#" class="sidebar-link" id="menu-profile">
+                        <i class="fa-solid fa-user-gear"></i>
+                        <span>Meu Perfil</span>
+                    </a>
+                    <a href="#" class="sidebar-link" id="menu-favorites">
+                        <i class="fa-solid fa-star"></i>
+                        <span>Rotas Favoritas</span>
+                    </a>
+                    <a href="#" class="sidebar-link" id="menu-history">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <span>Histórico de Viagens</span>
+                    </a>
+                    <a href="#" class="sidebar-link" id="menu-contacts">
+                        <i class="fa-solid fa-headset"></i>
+                        <span>Emergência e Suporte</span>
+                    </a>
+                    <a href="#" class="sidebar-link" id="menu-chat">
+                        <i class="fa-solid fa-robot"></i>
+                        <span>Orion AI</span>
+                    </a>
+                    <a href="#" class="sidebar-link" id="menu-settings">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Configurações</span>
+                    </a>
+                </nav>
+
+                <div class="sidebar-footer">
+                    <a href="#" class="sidebar-link logout-link" id="btn-logout">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span>Sair da conta</span>
+                    </a>
+                </div>
+            </aside>
+            <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+            <!-- TELA DE LOGIN -->
+            <div id="screen-login" class="app-screen">
+                <div class="login-wrapper">
+                    <div class="login-brand">Track<span>Bus</span></div>
+                    <div class="login-card">
+                        <div class="login-tabs">
+                            <button id="btn-tab-signin" class="login-tab-btn active">Entrar</button>
+                            <button id="btn-tab-signup" class="login-tab-btn">Cadastrar</button>
+                        </div>
+                        <form id="form-signin" class="auth-form active">
+                            <div class="form-input-group">
+                                <label>Usuário ou Matrícula</label>
+                                <input type="text" id="signin-user" placeholder="Sua matrícula">
+                            </div>
+                            <div class="form-input-group">
+                                <label>Senha</label>
+                                <input type="password" id="signin-pass" placeholder="••••••••">
+                            </div>
+                            <button type="submit" class="btn-auth-submit">Entrar</button>
+                            <div class="social-auth-divider"><span>ou</span></div>
+                            <div class="social-auth-buttons">
+                                <button type="button" id="btn-login-google" class="btn-social btn-google">
+                                    <i class="fa-brands fa-google"></i> Google
+                                </button>
+                            </div>
+                        </form>
+                        <form id="form-signup" class="auth-form">
+                            <div class="form-input-group">
+                                <label>Nome Completo</label>
+                                <input type="text" id="signup-name" placeholder="Seu Nome">
+                            </div>
+                            <div class="form-input-group">
+                                <label>Usuário ou Matrícula</label>
+                                <input type="text" id="signup-user" placeholder="Crie um usuário">
+                            </div>
+                            <div class="form-input-group">
+                                <label>Senha</label>
+                                <input type="password" id="signup-pass" placeholder="••••••••">
+                            </div>
+                            <button type="submit" class="btn-auth-submit">Cadastrar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TELA INICIAL (HOME) -->
+            <div id="screen-home" class="app-screen active">
+                <header class="sub-screen-header">
+                    <button id="btn-trigger-menu" class="btn-back-to-home" style="width: auto; height: auto;">
+                        <i class="fa-solid fa-bars" style="font-size: 1.2rem;"></i>
+                    </button>
+                    <div class="header-brand-title">
+                        <h1>TrackBus</h1>
+                    </div>
+                    <div class="header-actions-right">
+                        <button class="btn-header-action" id="btn-refresh-app" title="Atualizar"><i class="fa-solid fa-rotate"></i></button>
+                        <button class="btn-header-action" id="btn-header-orion" title="Orion AI"><i class="fa-solid fa-robot"></i></button>
+                        <button class="btn-header-action action-notification" id="btn-header-alerts">
+                            <i class="fa-solid fa-bell"></i>
+                            <span class="badge-alert-count">2</span>
+                        </button>
+                    </div>
+                </header>
+
+                <div class="home-user-profile-bar">
+                    <div class="profile-bar-avatar">
+                        <i class="fa-solid fa-user" style="color: var(--azul-trackbus);"></i>
+                    </div>
+                    <span class="profile-bar-username" id="home-username-display">Carregando...</span>
+                </div>
+
+                <div class="transit-horizontal-carousel">
+                    <div class="carousel-scroll-wrapper" id="carousel-history-wrapper">
+                        <div class="carousel-item-node add-node" id="btn-quick-search">
+                            <div class="node-circle-frame">
+                                <i class="fa-solid fa-plus"></i>
+                            </div>
+                            <span class="node-title">Nova Rota</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="home-search-card">
+                    <div class="search-bar-trigger" id="open-search-trigger">
+                        <i class="fa-solid fa-magnifying-glass search-bar-icon"></i>
+                        <span class="search-bar-placeholder">Para onde vamos?</span>
+                    </div>
+                    <div id="recent-destination-shortcut" class="recent-destination-item">
+                        <i class="fa-regular fa-clock clock-icon"></i>
+                        <div class="recent-destination-details">
+                            <span class="destination-title" id="fav-route-title">Nenhuma rota frequente</span>
+                            <span class="destination-subtitle" id="fav-route-subtitle">Sua rota preferida aparecerá aqui</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="promo-carousel-section">
+                    <div class="promo-carousel">
+                        <div class="promo-card bg-promo-blue" id="card-promo-alerts">
+                            <div class="promo-card-content">
+                                <span class="promo-tag">Avisos</span>
+                                <h3>Acompanhe seu ônibus</h3>
+                                <p>Evite atrasos monitorando a rota em tempo real.</p>
+                            </div>
+                            <i class="fa-solid fa-bus promo-illust-icon"></i>
+                        </div>
+                        <div class="promo-card bg-promo-green" id="card-promo-feedback">
+                            <div class="promo-card-content">
+                                <span class="promo-tag">Segurança</span>
+                                <h3>Fale Conosco</h3>
+                                <p>Deixe sugestões ou relate problemas à secretaria.</p>
+                            </div>
+                            <i class="fa-solid fa-shield-halved promo-illust-icon"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="home-features-footer">
+                    <p class="feature-footer-text">Transporte mais inteligente, seguro e conectado.</p>
+                    <div class="feature-footer-badges">
+                        <div class="footer-mini-badge"><i class="fa-solid fa-location-dot"></i><span>Rotas</span></div>
+                        <div class="footer-mini-badge"><i class="fa-solid fa-shield-halved"></i><span>Segurança</span></div>
+                        <div class="footer-mini-badge"><i class="fa-solid fa-bolt"></i><span>Info</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SELEÇÃO DE ROTA -->
+            <div id="screen-search" class="app-screen">
+                <header class="sub-screen-header">
+                    <button id="btn-back-search" class="btn-back-to-home"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h2>Selecionar Rota</h2>
+                </header>
+                <div class="search-form-container">
+                    <form id="form-select-route" class="selection-box">
+                        <div class="selection-field">
+                            <i class="fa-solid fa-circle-dot location-dot-start"></i>
+                            <select id="select-cidade-polo">
+                                <option value="" disabled selected>Selecione a cidade polo</option>
+                            </select>
+                        </div>
+                        <div class="selection-divider"></div>
+                        <div class="selection-field">
+                            <i class="fa-solid fa-location-dot route-dot-end"></i>
+                            <select id="select-itinerario" disabled>
+                                <option value="" disabled selected>Selecione o itinerário</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-route-confirm">Confirmar Rota</button>
+                    </form>
+                </div>
+            </div>
+            <!-- MAPA E MONITORAMENTO -->
+            <div id="screen-tracking" class="app-screen">
+                <div id="live-map"></div>
+                <div class="tracking-top-bar">
+                    <button id="btn-back-tracking" class="btn-back-from-tracking"><i class="fa-solid fa-chevron-left"></i></button>
+                    <div class="active-route-badge" id="tracking-route-title">Carregando rota...</div>
+                </div>
+                <div class="tracking-bottom-sheet">
+                    <div class="bottom-sheet-drag-handle"></div>
+                    <div class="tracking-sheet-header">
+                        <span class="tracking-status-badge status-operacao" id="tracking-status-label">Em Operação</span>
+                        <span class="tracking-capacity-badge" id="tracking-capacity-label">Lotação: Normal</span>
+                    </div>
+                    <div class="tracking-alert-banner" id="tracking-alert-banner">
+                        Ônibus em deslocamento regular.
+                    </div>
+                    <div class="tracking-details-card">
+                        <div class="tracking-driver-info">
+                            <div class="tracking-driver-icon"><i class="fa-solid fa-id-card"></i></div>
+                            <div class="tracking-driver-meta">
+                                <span class="tracking-meta-label">Condutor Responsável</span>
+                                <span class="tracking-meta-value" id="tracking-driver-name">--</span>
+                            </div>
+                        </div>
+                        <div class="tracking-timeline">
+                            <div class="timeline-path-line"></div>
+                            <div class="timeline-stop stop-start">
+                                <i class="fa-solid fa-circle-dot"></i>
+                                <div class="stop-info">
+                                    <span class="stop-name" id="tracking-stop-start-name">Origem</span>
+                                    <span class="stop-time" id="tracking-stop-start-time">--:--</span>
+                                </div>
+                            </div>
+                            <div class="timeline-stop stop-end">
+                                <i class="fa-solid fa-location-pin"></i>
+                                <div class="stop-info">
+                                    <span class="stop-name" id="tracking-stop-end-name">ECIT Dom Marcelo</span>
+                                    <span class="stop-time" id="tracking-stop-end-time">--:--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="btn-close-tracking" class="btn-close-tracking">Voltar para início</button>
+                </div>
+            </div>
+
+            <!-- MURAL DE AVISOS -->
+            <div id="screen-alerts" class="app-screen">
+                <header class="sub-screen-header">
+                    <button id="btn-back-alerts" class="btn-back-to-home"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h2>Mural de Avisos</h2>
+                </header>
+                <div class="sub-screen-content">
+                    <div class="tracking-details-card" style="margin-bottom: 12px;">
+                        <span class="promo-tag" style="background: var(--azul-trackbus); color:#000;">Importante</span>
+                        <h4 style="margin-top: 8px;">Manutenção na Linha Mari</h4>
+                        <p style="font-size: 0.8rem; color: var(--cinza-texto); margin-top: 4px;">O ônibus fará o trajeto normal, com atraso estimado em 10 minutos devido a obras na pista.</p>
+                    </div>
+                    <div class="tracking-details-card">
+                        <span class="promo-tag" style="background: #10B981; color:#fff;">Geral</span>
+                        <h4 style="margin-top: 8px;">Horários do Fim de Semana</h4>
+                        <p style="font-size: 0.8rem; color: var(--cinza-texto); margin-top: 4px;">Não haverá transporte estudantil no sábado letivo.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FEEDBACK -->
+            <div id="screen-feedback" class="app-screen">
+                <header class="sub-screen-header">
+                    <button id="btn-back-feedback" class="btn-back-to-home"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h2>Enviar Feedback</h2>
+                </header>
+                <div class="sub-screen-content">
+                    <form id="form-feedback-student" class="feedback-card">
+                        <p class="feedback-intro-text">Relate problemas com lotação, atrasos ou envie sugestões para a direção da ECIT.</p>
+                        <div class="form-input-group">
+                            <label>Mensagem / Relato</label>
+                            <textarea id="feedback-text" rows="5" placeholder="Escreva aqui seu feedback..." style="resize: none;"></textarea>
+                        </div>
+                        <button type="submit" class="btn-feedback-submit">Enviar para Secretaria</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- MEU PERFIL -->
+            <div id="screen-profile" class="app-screen">
+                <header class="sub-screen-header">
+                    <button id="btn-back-profile" class="btn-back-to-home"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h2>Meu Perfil</h2>
+                </header>
+                <div class="sub-screen-content">
+                    <div class="profile-card">
+                        <div class="profile-avatar-large" style="display: flex; align-items: center; justify-content: center; background: #222; width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 16px auto;">
+                            <i class="fa-solid fa-user-graduate" style="font-size: 2.2rem; color: var(--azul-trackbus, #3B82F6);"></i>
+                        </div>
+                        <div class="profile-field-group" style="margin-bottom: 12px;">
+                            <span class="profile-field-label" style="font-size: 0.8rem; color: #888; display: block;">Nome Completo</span>
+                            <span class="profile-field-value" id="user-name-display" style="font-weight: 600;">Carregando...</span>
+                        </div>
+                        <div class="profile-field-group">
+                            <span class="profile-field-label" style="font-size: 0.8rem; color: #888; display: block;">Matrícula / Usuário</span>
+                            <span class="profile-field-value" id="profile-matricula-display" style="font-weight: 600;">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROTAS FAVORITAS -->
+            <div id="screen-favorites" class="app-screen">
+                <header class="sub-screen-header">
+                    <button id="btn-back-favorites" class="btn-back-to-home"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h2>Rotas Favoritas</h2>
+                </header>
+                <div class="sub-screen-content">
+                    <div class="favorites-list" id="favorites-container">
+                        <div class="tracking-details-card favorite-item-card" style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span class="promo-tag" style="background: #FFB800; color: #000;">Frequente</span>
+                                    <h4 style="margin-top: 6px;">Rota do Quartel</h4>
+                                    <p style="font-size: 0.8rem; color: #888;">Guarabira ➔ ECIT Dom Marcelo</p>
+                                </div>
+                                <button class="btn-open-fav-route" data-route="Rota do Quartel" style="background: #FFB800; border: none; border-radius: 50%; width: 42px; height: 42px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fa-solid fa-location-arrow" style="color: #000; font-size: 1.1rem;"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="tracking-details-card favorite-item-card">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span class="promo-tag" style="background: #3B82F6; color: #fff;">Linha Direta</span>
+                                    <h4 style="margin-top: 6px;">Linha Mari</h4>
+                                    <p style="font-size: 0.8rem; color: #888;">Mari ➔ ECIT Dom Marcelo</p>
+                                </div>
+                                <button class="btn-open-fav-route" data-route="Linha Mari" style="background: #FFB800; border: none; border-radius: 50%; width: 42px; height: 42px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fa-solid fa-location-arrow" style="color: #000; font-size: 1.1rem;"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- HISTÓRICO DE VIAGENS -->
+            <div id="screen-history" class="app-screen">
+                <header class="sub-screen-header">
+                    <button id="btn-back-history" class="btn-back-to-home"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h2>Histórico de Viagens</h2>
+                </header>
+                <div class="sub-screen-content">
+                    <div class="history-list">
+                        <div class="tracking-details-card" style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div>
+                                    <h4 style="margin-bottom: 4px;">Rota do Quartel</h4>
+                                    <p style="font-size: 0.8rem; color: #888;"><i class="fa-regular fa-clock"></i> Hoje às 06:45</p>
+                                </div>
+                                <span class="promo-tag" style="background: #10B981; color: #fff;">Concluída</span>
+                            </div>
+                        </div>
+                        <div class="tracking-details-card">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div>
+                                    <h4 style="margin-bottom: 4px;">Linha Mari</h4>
+                                    <p style="font-size: 0.8rem; color: #888;"><i class="fa-regular fa-clock"></i> Ontem às 12:10</p>
+                                </div>
+                                <span class="promo-tag" style="background: #10B981; color: #fff;">Concluída</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- EMERGÊNCIA E SUPORTE -->
+            <div id="screen-contacts" class="app-screen">
+                <header class="sub-screen-header">
+                    <button id="btn-back-contacts" class="btn-back-to-home"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h2>Emergência e Suporte</h2>
+                </header>
+                <div class="sub-screen-content">
+                    <div class="tracking-details-card" style="margin-bottom: 12px;">
+                        <h4 style="margin-bottom: 8px;"><i class="fa-solid fa-phone" style="color: #FFB800;"></i> Contatos Diretos</h4>
+                        <p style="font-size: 0.85rem; color: #ccc; margin-bottom: 12px;">Entre em contato com os responsáveis em caso de emergência ou imprevistos na rota.</p>
+                        
+                        <a href="tel:8399505995" style="display: flex; align-items: center; gap: 10px; background: #222; padding: 12px; border-radius: 8px; text-decoration: none; color: #fff; margin-bottom: 8px;">
+                            <i class="fa-solid fa-bus" style="color: #FFB800;"></i>
+                            <div>
+                                <span style="display: block; font-size: 0.85rem; font-weight: 600;">Segunda Gerência Regional</span>
+                                <span style="font-size: 0.75rem; color: #888;">(83) 9348-8299</span>
+                            </div>
+                        </a>
+
+                        <a href="tel:83988888888" style="display: flex; align-items: center; gap: 10px; background: #222; padding: 12px; border-radius: 8px; text-decoration: none; color: #fff;">
+                            <i class="fa-solid fa-headset" style="color: #3B82F6;"></i>
+                            <div>
+                                <span style="display: block; font-size: 0.85rem; font-weight: 600;">Suporte Técnico TrackBus</span>
+                                <span style="font-size: 0.75rem; color: #888;">(83) 98888-8888</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONFIGURAÇÕES -->
+            <div id="screen-settings" class="app-screen">
+                <header class="sub-screen-header">
+                    <button id="btn-back-settings" class="btn-back-to-home"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h2>Configurações</h2>
+                </header>
+                <div class="sub-screen-content">
+                    <div class="tracking-details-card" style="margin-bottom: 12px;">
+                        <h4 style="margin-bottom: 12px;"><i class="fa-solid fa-bell" style="color: #FFB800;"></i> Preferências de Notificação</h4>
+                        <label style="display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: #ccc;">
+                            <span>Avisos de Aproximação</span>
+                            <input type="checkbox" checked style="accent-color: #FFB800; width: 18px; height: 18px;">
+                        </label>
+                    </div>
+
+                    <div class="tracking-details-card">
+                        <h4 style="margin-bottom: 8px;"><i class="fa-solid fa-database" style="color: #EF4444;"></i> Armazenamento Local</h4>
+                        <p style="font-size: 0.8rem; color: #888; margin-bottom: 12px;">Limpe dados de cache e sessões armazenadas localmente no dispositivo.</p>
+                        <button id="btn-clear-cache" style="background: #DC2626; color: #fff; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%;">Limpar Cache do App</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ORION AI - SUPORTE INTELIGENTE -->
+            <div id="screen-chat" class="app-screen">
+                <header class="sub-screen-header">
+                    <button id="btn-back-chat" class="btn-back-to-home"><i class="fa-solid fa-arrow-left"></i></button>
+                    <h2>Orion AI</h2>
+                </header>
+                <div class="orion-chat-wrapper">
+                    <div class="orion-chat-banner">
+                        <span class="orion-status-dot"></span>
+                        <span>Suporte Inteligente TrackBus</span>
+                    </div>
+                    <div id="chat-container" class="orion-chat-container">
+                        <div class="orion-msg orion-msg-bot">
+                            <div class="orion-avatar"><i class="fa-solid fa-robot"></i></div>
+                            <div class="orion-bubble-group">
+                                <div class="orion-bubble">
+                                    <p><strong>Olá! Eu sou a Orion AI 🚀</strong></p>
+                                    <p>Como posso te ajudar com rotas, horários de ônibus, localização ou sua carteirinha no TrackBus hoje?</p>
+                                </div>
+                                <span class="orion-msg-time" id="orion-hora-inicial">--:--</span>
+                            </div>
+                        </div>
+                    </div>
+                    <form id="chat-form" class="orion-chat-form">
+                        <input type="text" id="user-input-orion" class="orion-chat-input" placeholder="Pergunte à Orion AI..." autocomplete="off">
+                        <button type="submit" id="send-btn-orion" class="orion-send-btn">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- NAVEGAÇÃO INFERIOR -->
+            <nav class="bottom-tab-nav">
+                <button id="tab-home" class="tab-nav-item active">
+                    <div class="tab-nav-circle">
+                        <i class="fa-solid fa-bus"></i>
+                    </div>
+                    <span>Ônibus</span>
+                </button>
+                <button id="tab-alerts" class="tab-nav-item">
+                    <div class="tab-nav-circle-secondary">
+                        <i class="fa-solid fa-bullhorn"></i>
+                    </div>
+                    <span>Avisos</span>
+                </button>
+                <button id="tab-feedback" class="tab-nav-item">
+                    <div class="tab-nav-circle-secondary">
+                        <i class="fa-solid fa-comment-dots"></i>
+                    </div>
+                    <span>Feedback</span>
+                </button>
+            </nav>
+
+            <div id="auth-menu" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+</body>
+</html>
